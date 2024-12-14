@@ -27,6 +27,7 @@ export default defineConfig((config) => {
       chrome129IssuePlugin(),
       config.mode === 'production' && optimizeCssModules({ apply: 'build' }),
     ],
+    envPrefix: ['VITE_'],
   };
 });
 

@@ -1,8 +1,8 @@
 import { streamText as _streamText, convertToCoreMessages } from 'ai';
-import { getAPIKey } from '~/lib/.server/llm/api-key';
-import { getAnthropicModel } from '~/lib/.server/llm/model';
-import { MAX_TOKENS } from './constants';
+import { MAX_TOKENS, MAX_QWEN_TOKENS } from './constants';
 import { getSystemPrompt } from './prompts';
+import { getModel } from './model';
+import { getAPIModel } from './api-key';
 
 interface ToolResult<Name extends string, Args, Result> {
   toolCallId: string;
@@ -22,14 +22,18 @@ export type Messages = Message[];
 export type StreamingOptions = Omit<Parameters<typeof _streamText>[0], 'model'>;
 
 export function streamText(messages: Messages, env: Env, options?: StreamingOptions) {
+  const apiModel = getAPIModel(env);
+  let maxToken = MAX_TOKENS;
+
+  if (apiModel.toLowerCase().includes('qwen')) {
+    maxToken = MAX_QWEN_TOKENS;
+  }
+
   return _streamText({
-    model: getAnthropicModel(getAPIKey(env)),
+    model: getModel(env),
     system: getSystemPrompt(),
-    maxTokens: MAX_TOKENS,
-    headers: {
-      'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15',
-    },
-    messages: convertToCoreMessages(messages),
+    maxTokens: maxToken,
+    messages: convertToCoreMessages(messages as any),
     ...options,
   });
 }
